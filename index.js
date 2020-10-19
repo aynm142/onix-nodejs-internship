@@ -43,8 +43,7 @@ app.post('/', function (request, response) {
                     height: Number(fields.height[0]),
                     width: Number(fields.width[0])
                 }).toFile(`public/images/${uploadFileName}`)
-                    .then(() => response.json({'image': `/public/images/${uploadFileName}`})
-                    );
+                    .then(() => response.json({'image': `/public/images/${uploadFileName}`}));
             } else if (fields.todo[0] === '2') { // case when we want to crop image
                 // crop image and save
                 sharp(image.path).extract({
@@ -53,10 +52,7 @@ app.post('/', function (request, response) {
                     height: Number(fields.height[0]),
                     width: Number(fields.width[0])
                 }).toFile(`public/images/${uploadFileName}`)
-                    .then(() => response.json({'image': `/public/images/${uploadFileName}`}).catch(err => {
-                            console.log(err)
-                        })
-                    );
+                    .then(() => response.json({'image': `/public/images/${uploadFileName}`}));
             }
         }
     });
