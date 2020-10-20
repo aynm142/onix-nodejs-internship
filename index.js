@@ -3,6 +3,7 @@ const app = express();
 const multiparty = require("multiparty");
 const sharp = require("sharp");
 const path = require("path")
+const fs = require("fs")
 const port = 3000
 
 app.set("view engine", "hbs");
@@ -44,6 +45,10 @@ app.post('/', function (request, response) {
                     width: Number(fields.width[0])
                 }).toFile(`public/images/${uploadFileName}`)
                     .then(() => response.json({'image': `/public/images/${uploadFileName}`}));
+                logToFile(`public/upload/${uploadFileName}`, `public/images${uploadFileName}`, 'resize', {
+                    height: Number(fields.height[0]),
+                    width: Number(fields.width[0])
+                });
             } else if (fields.todo[0] === '2') { // case when we want to crop image
                 // crop image and save
                 sharp(image.path).extract({
@@ -53,15 +58,68 @@ app.post('/', function (request, response) {
                     width: Number(fields.width[0])
                 }).toFile(`public/images/${uploadFileName}`)
                     .then(() => response.json({'image': `/public/images/${uploadFileName}`}));
+                logToFile(`public/upload/${uploadFileName}`, `public/images${uploadFileName}`, 'crop', {
+                    top: Number(fields.top[0]),
+                    left: Number(fields.left[0]),
+                    height: Number(fields.height[0]),
+                    width: Number(fields.width[0])
+                });
             }
         }
     });
 });
 
+app.get('/log', function (request, response) {
+    let logs = fs.readFileSync("log.txt", "utf8");
+    let logsArray = logs.split('\n');
+    if (logsArray[logsArray.length - 1] === '') {
+        logsArray.pop()
+    }
+    let from = request.query.from;
+    let to = request.query.to;
+    let result = [];
+    if (from !== undefined && to !== undefined) {
+        logsArray.filter(function (element) {
+            let elementObj = JSON.parse(element);
+            if ((elementObj.timestamp.split(' ')[0] >= from) && (elementObj.timestamp.split(' ')[0] <= to)) {
+                result.push(elementObj);
+            }
+        });
+    }
+
+    if (from !== undefined && to === undefined) {
+        logsArray.filter(function (element) {
+            console.log(1);
+            let elementObj = JSON.parse(element);
+            console.log(2);
+            if (elementObj.timestamp.split(' ')[0] >= from) {
+                result.push(elementObj);
+            }
+        });
+    }
+
+    if (from === undefined && to !== undefined) {
+        logsArray.filter(function (element) {
+            let elementObj = JSON.parse(element);
+            if (elementObj.timestamp.split(' ')[0] <= to) {
+                result.push(elementObj);
+            }
+        });
+    }
+
+    if (result.length === 0 && from === undefined && to === undefined) {
+        logsArray.forEach(function (element) {
+            result.push(JSON.parse(element));
+        });
+    }
+
+    return response.json({'logs': result});
+});
+
 function validateData(fields) {
     let error = "";
 
-    if (fields.todo === undefined || (fields.todo[0] !== '1' && fields.todo[0] !== '2')) {
+    if (fields.todo === undefined || (fields.todo[0] != 1 && fields.todo[0] != 2)) {
         error += "todo field doesn't equals 1 or 2 or missing. ";
     }
 
@@ -77,15 +135,28 @@ function validateData(fields) {
         error += "width is not a number. ";
     }
 
-    if (fields.todo === '2' && left === undefined) {
+    if (fields.todo == 2 && fields.left === undefined) {
         error += "left is missing. "
     }
 
-    if (fields.todo === '2' && top === undefined) {
+    if (fields.todo == 2 && fields.top === undefined) {
         error += "top is missing. "
     }
 
     return error
+}
+
+function logToFile(upload, output, action, data) {
+    let today = new Date();
+    let date = today.getDate() + '-' + (today.getMonth() + 1) + '-' + today.getFullYear();
+    let time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+    let dateTime = date + ' ' + time;
+    let log = {upload: upload, output: output, action: action, data: data, timestamp: dateTime}
+    fs.appendFile('log.txt',
+        JSON.stringify(log) + "\n",
+        function (err) {
+            if (err) throw err;
+        });
 }
 
 app.listen(port);
