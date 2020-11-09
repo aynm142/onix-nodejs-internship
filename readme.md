@@ -7,7 +7,7 @@ $ npm install
 run server:
 
 ```
-$ node app.js
+$ npm start
 ```
 
 simple UI:
