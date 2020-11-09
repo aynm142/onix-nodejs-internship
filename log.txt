@@ -1,0 +1,1 @@
+{"upload":"public/upload/XukyKQdkK2QGQ6mKmAzruGgw.png","output":"public/imagesXukyKQdkK2QGQ6mKmAzruGgw.png","action":"resize","data":{"height":150,"width":150},"timestamp":"9-11-2020 16:35:6"}
